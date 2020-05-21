@@ -133,8 +133,13 @@ class ATRansac : public TObject
         std::pair<Double_t,Double_t> AngleZAxis;
         std::pair<Double_t,Double_t> AngleZDet;
         std::pair<Double_t,Double_t> AngleYDet;
+        std::pair<Double_t,Double_t> AngTheta;
+        std::pair<Double_t,Double_t> AngPhi;
+        std::pair<Double_t,Double_t> Range;
+        std::pair<Double_t,Double_t> MaxR;
         Double_t minDist;
         TVector3 meanVertex;
+        std::pair<TVector3,TVector3> LastPoint;
         Double_t angle;
       };
 
@@ -220,7 +225,7 @@ class ATRansac : public TObject
 
 
 
-  ClassDef(ATRansac, 1);
+  ClassDef(ATRansac, 2);
 
 
 };

@@ -5,8 +5,8 @@ void eventDisplay_d2He()
   //TString  ParFile       ="/mnt/simulations/attpcroot/data/attpcpar_d2He_12C_1atm.root";
   TString  OutFile	 ="./data/attpctest.root";
 
-  TString  InputFile     ="./data/attpcsim_d2He_12C_03atm.root";
-  TString  ParFile       ="./data/attpcpar_d2He_12C_03atm.root";
+  TString  InputFile     ="d2He/attpcsim_d2He_test.root";
+  TString  ParFile       ="d2He/attpcpar_d2He_test.root";
 
 
   // -----   Reconstruction run   -------------------------------------------

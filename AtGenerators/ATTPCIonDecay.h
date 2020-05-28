@@ -38,8 +38,9 @@ public:
   //ATTPCIonDecay(const char* name,std::vector<Int_t> *z,std::vector<Int_t> *a,std::vector<Int_t> *q, Int_t mult, std::vector<Double_t> *px,
   //  std::vector<Double_t>* py,std::vector<Double_t> *pz, std::vector<Double_t> *mass , Double_t ResEner, Int_t ZB, Int_t AB, Double_t PxB, Double_t PyB, Double_t PzB, Double_t BMass, Double_t TMass);
 
-  ATTPCIonDecay(std::vector<Int_t> *z, std::vector<Int_t> *a, std::vector<Int_t> *q, std::vector<Double_t> *mass,
-     Int_t ZB, Int_t AB, Double_t BMass, Double_t SepEne);
+  ATTPCIonDecay(std::vector<std::vector<Int_t>> *z, std::vector<std::vector<Int_t>> *a, std::vector<std::vector<Int_t>> *q,
+    std::vector<std::vector<Double_t>> *mass, Int_t ZB, Int_t AB, Double_t BMass, std::vector<Double_t> *SepEne);
+
 
     ATTPCIonDecay(const ATTPCIonDecay&);
 
@@ -55,13 +56,14 @@ public:
   private:
 
     static Int_t fgNIon;                      //! Number of the instance of this class
-    std::vector<FairParticle*>  fParticle;
-    Int_t    fMult;                           // Multiplicity per event
+    std::vector<Int_t>    fMult;   // Multiplicity per decay channel
+    Int_t fNbCases;   //Number of decay channel
     std::vector<Double_t> fPx, fPy, fPz;      // Momentum components [GeV] per nucleon
-    std::vector<Double_t> Masses;             // Masses of the N products
+    std::vector<std::vector<Double_t>> fMasses;             // Masses of the N products
     Double_t fVx, fVy, fVz;                   // Vertex coordinates [cm]
-    std::vector<FairIon*>  fIon;              // Pointer to the FairIon to be generated
-    std::vector<TString> fPType;
+    std::vector<std::vector<FairIon*>>  fIon;              // Pointer to the FairIon to be generated
+    std::vector<std::vector<FairParticle*>>  fParticle;
+    std::vector<std::vector<TString>> fPType;
     std::vector<Int_t>   fQ;		    // Electric charge [e]
     //std::vector<Int_t> fA;
     //std::vector<Int_t> fZ;
@@ -74,7 +76,7 @@ public:
     Double_t fPzBeam;
     Bool_t fIsDecay;
     Double_t fBeamMass;
-    Double_t fSepEne;
+    std::vector<Double_t> fSepEne;
 
 
 

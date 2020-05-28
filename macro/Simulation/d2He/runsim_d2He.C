@@ -210,59 +210,90 @@ void runsim_d2He(Int_t nEvents = 50, TString mcEngine = "TGeant4")
   //-------------------------------------------------------------------------
   //Set the parameters of the decay generator
 
-  std::vector<Int_t> zDecay;
-  std::vector<Int_t> aDecay;
-  std::vector<Int_t> qDecay;
-  std::vector<Double_t> massDecay;
+  std::vector<std::vector<Int_t>> zDecay;
+  std::vector<std::vector<Int_t>> aDecay;
+  std::vector<std::vector<Int_t>> qDecay;
+  std::vector<std::vector<Double_t>> massDecay;
 
-  Int_t ZB;
-  Int_t AB;
-  Double_t BMassDecay;
-  Double_t SepEne=7.55056;//Sp 14N in MeV, not used for now in IonDecay
+  Int_t zB;
+  Int_t aB;
+  Double_t massDecayB;
+  std::vector<Double_t> SepEne;
+
+  Int_t TotDecayCases=4;//the number of decay channel (case) to be considered
+
+  zDecay.resize(TotDecayCases);
+  aDecay.resize(TotDecayCases);
+  qDecay.resize(TotDecayCases);
+  massDecay.resize(TotDecayCases);
 
   //--- decaying nucleus -----
-  ZB=7; // 14N
-  AB=14;
-  BMassDecay=14.00307400443;
+  //should be a reaction product (its momentum is set in the reaction generator)
+  zB=7; // 14N
+  aB=14;
+  massDecayB=14.00307400443;
 
   // ---- Products ----
-  //(only one decay channel supported for now in the IonDecay, comment in/out...)
-  /*
-  zDecay.push_back(6); // 13C
-  aDecay.push_back(13);
-  qDecay.push_back(0);
-  massDecay.push_back(13.0033548352);
-*/
-  zDecay.push_back(1); //proton
-  aDecay.push_back(1);
-  qDecay.push_back(0);
-  massDecay.push_back(1.0078250322);
-  
-/*
-  zDecay.push_back(7); // 13N
-  aDecay.push_back(13);
-  qDecay.push_back(0);
-  massDecay.push_back(13.005738609);
-*/
-  zDecay.push_back(0); //neutron
-  aDecay.push_back(1);
-  qDecay.push_back(0);
-  massDecay.push_back(1.0086649158);
+  //as many first indexes (zDecay.at(0)...) as the value TotDecayCases
+  //Case 1
+  SepEne.push_back(7.55056);
+  zDecay.at(0).push_back(6); // 13C
+  aDecay.at(0).push_back(13);
+  qDecay.at(0).push_back(0);
+  massDecay.at(0).push_back(13.0033548352);
 
+  zDecay.at(0).push_back(1); //proton
+  aDecay.at(0).push_back(1);
+  qDecay.at(0).push_back(0);
+  massDecay.at(0).push_back(1.0078250322);
 
-  zDecay.push_back(6); // 12C
-  aDecay.push_back(12);
-  qDecay.push_back(0);
-  massDecay.push_back(12.0);
+  //Case 2
+  SepEne.push_back(10.55338);
+  zDecay.at(1).push_back(7); // 13N
+  aDecay.at(1).push_back(13);
+  qDecay.at(1).push_back(0);
+  massDecay.at(1).push_back(13.005738609);
 
+  zDecay.at(1).push_back(0); //neutron
+  aDecay.at(1).push_back(1);
+  qDecay.at(1).push_back(0);
+  massDecay.at(1).push_back(1.0086649158);
+
+  //Case 3
+  SepEne.push_back(10.262305);//obtained by mass excess difference
+  zDecay.at(2).push_back(6); // 12C
+  aDecay.at(2).push_back(12);
+  qDecay.at(2).push_back(0);
+  massDecay.at(2).push_back(12.0);
+
+  zDecay.at(2).push_back(1); //d
+  aDecay.at(2).push_back(2);
+  qDecay.at(2).push_back(0);
+  massDecay.at(2).push_back(2.01410177812);
+
+  //Case 4
+  SepEne.push_back(12.496871);//obtained by mass excess difference
+  zDecay.at(3).push_back(6); // 12C
+  aDecay.at(3).push_back(12);
+  qDecay.at(3).push_back(0);
+  massDecay.at(3).push_back(12.0);
+
+  zDecay.at(3).push_back(1); //proton
+  aDecay.at(3).push_back(1);
+  qDecay.at(3).push_back(0);
+  massDecay.at(3).push_back(1.0078250322);
+
+  zDecay.at(3).push_back(0); //neutron
+  aDecay.at(3).push_back(1);
+  qDecay.at(3).push_back(0);
+  massDecay.at(3).push_back(1.0086649158);
 
   ATTPCIonDecay* decay_14N = new ATTPCIonDecay(&zDecay, &aDecay, &qDecay, &massDecay,
-    ZB, AB, BMassDecay, SepEne);
+    zB, aB, massDecayB, &SepEne);
 
     primGen->AddGenerator(decay_14N);
 
     // ------------------------------------------------------------------------
-
 
     run->SetGenerator(primGen);
 

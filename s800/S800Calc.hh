@@ -5,6 +5,8 @@
 #include <vector>
 #include <cmath>
 #include "TObject.h"
+#include "TNamed.h"
+
 using namespace std;
 class S800;
 class S800Calibration;
@@ -430,7 +432,8 @@ protected:
 structure for each of the S800s detectors.  They are called 'CRDC', 'IC',
 'TOF', 'SCINT', 'HODOSCOPE' and 'MultiHitTOF'
  */
-class S800Calc : public TObject {
+ class S800Calc : public TNamed {
+//class S800Calc : public TObject {
 public:
    S800Calc(){}
 
@@ -495,7 +498,7 @@ protected:
 
   MultiHitTOF fMultiHitTOF;
 
-   ClassDef(S800Calc, 1);
+   ClassDef(S800Calc, 2);
 };
 
 #endif

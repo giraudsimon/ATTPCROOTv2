@@ -26,6 +26,10 @@ public:
   void SetGlom(Double_t glom);
   void SetOptiEvtDelta(Int_t EvtDelta);
   void SetPIDcut(TString file);
+  void SetTsDelta(Int_t TsDelta);
+
+  Int_t GetS800TsSize();
+  Int_t GetMergedTsSize();
 
   Bool_t isInGlom(Long64_t ts1, Long64_t ts2);
   Bool_t isInPID(S800Calc *s800calc);
@@ -42,7 +46,7 @@ private:
   S800Calc *fS800CalcBr;
   TFile *fS800file;
 
-  Int_t fTsEvtS800Size,fEvtDelta;
+  Int_t fTsEvtS800Size, fEvtMerged, fEvtDelta, fTsDelta;
   TString fS800File;
   vector <Long64_t> fS800Ts;
   vector <Double_t> fS800Evt;

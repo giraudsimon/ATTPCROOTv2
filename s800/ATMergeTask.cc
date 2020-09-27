@@ -32,6 +32,7 @@ ATMergeTask::ATMergeTask()
   fIsPersistence=kFALSE;
   fEvtDelta=100;
   fGlom=2;
+  fTsDelta=1272;
 
   fS800CalcBr = new S800Calc;
 
@@ -51,6 +52,9 @@ void   ATMergeTask::SetS800File(TString file)                  { fS800File     =
 void   ATMergeTask::SetGlom(Double_t glom)                  { fGlom     = glom; }
 void   ATMergeTask::SetOptiEvtDelta(Int_t EvtDelta)                  { fEvtDelta     = EvtDelta; }
 void   ATMergeTask::SetPIDcut(TString file)                  { fcutPIDFile.push_back(file); }
+void   ATMergeTask::SetTsDelta(Int_t TsDelta)                  { fTsDelta     = TsDelta; }
+Int_t   ATMergeTask::GetS800TsSize()                  { return fTsEvtS800Size; }
+Int_t   ATMergeTask::GetMergedTsSize()                  { return fEvtMerged; }
 
 Bool_t ATMergeTask::isInGlom(Long64_t ts1, Long64_t ts2)
 {
@@ -90,9 +94,9 @@ Bool_t ATMergeTask::isInPID(S800Calc *s800calc)
   //std::cout <<" Number of TCutG files  "<<fcutPID.size()<<"   "<<InCondition<< '\n';
 
   if(std::isnan(S800_tofCorr)==0)
-    if(InCondition){
-      is=kTRUE;
-    }
+  if(InCondition){
+    is=kTRUE;
+  }
   return is;
 }
 
@@ -116,6 +120,7 @@ ATMergeTask::Init()
 
 
   fTsEvtS800Size=0;
+  fEvtMerged=0;
 
   fS800file = new TFile(fS800File);
   TTreeReader reader1("caltree", fS800file);
@@ -124,10 +129,11 @@ ATMergeTask::Init()
   while (reader1.Next()) {
     fS800Ts.push_back((Long64_t) *ts);
     fS800Evt.push_back((Double_t) fTsEvtS800Size);
-    //if(fTsEvtS800Size<100) std::cout<<"Ts S800 "<<fS800Ts.at(fTsEvtS800Size)<<std::endl;
+    if(fTsEvtS800Size<100) std::cout<<"Ts S800 "<<fS800Ts.at(fTsEvtS800Size)<<std::endl;
     fTsEvtS800Size++;
   }
-  ioMan -> RegisterAny("s800cal", fS800CalcBr, fIsPersistence);
+  //ioMan -> RegisterAny("s800cal", fS800CalcBr, fIsPersistence);
+  ioMan -> Register("s800cal", "S800", fS800CalcBr, fIsPersistence);
 
   //std::cout << "  File :  " << fS800File<< " Events : " << fTsEvtS800Size <<"  " <<std::endl;
 
@@ -137,18 +143,19 @@ ATMergeTask::Init()
   */
   //I think TS has to be converted into double for TGraph, but would prefer to not have this extra step
   vector <Double_t> S800_ts(fS800Ts.begin(),fS800Ts.end());
-  //auto c1 = new TCanvas("c1", "c1", 800, 800);
+  auto c1 = new TCanvas("c1", "c1", 800, 800);
   Double_t par_fit[2];
-  gROOT->SetBatch(kTRUE);//kTRUE not display the plots
-  fOptiFit = new TF1("fOptiFit","[1]*x + [0]",0,7E+9);//poly 1 seems relatively ok, fit do not need to be very precise,
+  // gROOT->SetBatch(kTRUE);//kTRUE not display the plots
+  //fOptiFit = new TF1("fOptiFit","[1]*x + [0]",0,1E+9);//poly 1 seems relatively ok, fit do not need to be very precise,
+  fOptiFit = new TF1("fOptiFit","[1]*x + [0]",0,S800_ts.back());//poly 1 seems relatively ok, fit do not need to be very precise,
   //the fit limit might be an important parmeter
   //TF1 *f1 = new TF1("f1","[2]*x*x + [1]*x + [0]",0,1000);//ploy 2
-  TGraph *gS800 = new TGraph(80, &S800_ts[0], &fS800Evt[0]);//fTsEvtS800Size instead of 80 (just for the test file)
+  TGraph *gS800 = new TGraph(fTsEvtS800Size, &S800_ts[0], &fS800Evt[0]);//fTsEvtS800Size instead of 80 (just for the test file)
   gS800->Fit("fOptiFit");//might be biased by the TS default value
   fOptiFit->GetParameters(&par_fit[0]);
   fOptiFit->SetParameters(par_fit[0],par_fit[1]);
-  //c1->cd();
-  //gS800->Draw("AL");
+  c1->cd();
+  gS800->Draw("AL");
   //f1->Draw("same");
 
   //auto c2 = new TCanvas("c2", "c2", 800, 800);
@@ -200,6 +207,7 @@ ATMergeTask::Exec(Option_t *opt)
 
   fS800CalcBr -> Clear();
 
+
   if (fRawEventArray -> GetEntriesFast() == 0) return;
 
   ATRawEvent *rawEvent = (ATRawEvent *) fRawEventArray -> At(0);
@@ -211,23 +219,25 @@ ATMergeTask::Exec(Option_t *opt)
 
   for(int i=minj;i<maxj;i++)
   {
-    if(i>0 && i<fTsEvtS800Size){
-      if(isInGlom(fS800Ts.at(i-1),fS800Ts.at(i)) )std::cout<<" -- Warning -- Timestamp of consecutive entries from S800 root file within the ticks window"<<std::endl;
+    if(i>=0 && i<fTsEvtS800Size){
+      if(i>0 && isInGlom(fS800Ts.at(i-1),fS800Ts.at(i)) )std::cout<<" -- Warning -- Timestamp of consecutive entries from S800 root file within the ticks window"<<std::endl;
       else{
         //Is there a way to check that with the AT-TPC "event by event" processing?
         /*if(isInGlom(TsEvtATTPC.at(i-1),TsEvtATTPC.at(i)) )
         {
         cout<<" -- Warning -- Timestamp of consecutive entries from ATTPC root file within the glom"<<endl;
       }
-      else*/ if(isInGlom(fS800Ts.at(i),ATTPCTs) ){
+      else*/ if(isInGlom(fS800Ts.at(i)+fTsDelta,ATTPCTs) ){//fTsDelta=+1272 likely from the length of the sync signal between S800 and AT-TPC
       S800EvtMatch = (int)fS800Evt.at(i);
-      //std::cout<<" in glom "<<minj<<" "<<maxj<<" "<<i<<" "<<fS800Ts.at(i)<<" "<<ATTPCTs<<" "<<S800EvtMatch<<std::endl;
+      std::cout<<" in glom "<<minj<<" "<<maxj<<" "<<i<<" "<<fS800Ts.at(i)<<" "<<ATTPCTs<<" "<<S800EvtMatch<<std::endl;
+      fEvtMerged++;
       break;
     }
     else
     S800EvtMatch = -1;
     //std::cout<<" NOT in glom "<<minj<<" "<<maxj<<" "<<i<<" "<<fS800Ts.at(i)<<" "<<ATTPCTs<<" "<<S800EvtMatch<<std::endl;
   }
+
 }
 }
 

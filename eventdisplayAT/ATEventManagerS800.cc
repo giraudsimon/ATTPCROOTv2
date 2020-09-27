@@ -496,9 +496,13 @@ ATEventManagerS800::DrawPIDFull()
     Entries = chain->GetEntriesFast();
     for(int neve=1;neve<Entries;neve++){
       fRootManager->ReadEvent(neve);
-      cS800Array = (TClonesArray*) fRootManager->GetObject("s800cal");
-      if(cS800Array == nullptr) break;
-      cS800Calc = (S800Calc*) cS800Array->At(0);
+  //    cS800Array = (TClonesArray*) fRootManager->GetObject("s800cal");
+  //    if(cS800Array == nullptr) break;
+  //    cS800Calc = (S800Calc*) cS800Array->At(0);
+
+      cS800Calc = (S800Calc*) fRootManager->GetObject("s800cal");
+      if(cS800Calc == nullptr) break;
+      // cS800Calc = (S800Calc*) cS800Array->At(0);
 
       Double_t x0_corr_tof = 0.101259;
       Double_t afp_corr_tof = 1177.02;
@@ -522,7 +526,7 @@ ATEventManagerS800::DrawPIDFull()
       fPIDFull->Fill(S800_tofCorr,S800_dECorr);
 
     }
-    
+
     fPIDFull -> Draw("colz");
 
 }

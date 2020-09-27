@@ -1,22 +1,28 @@
 
 void testS800(){
 
-  std::string digiFileName = "/home/juan/FairRoot/ATTPCROOTv2_simon/test-runs800-48Ca-CAL-0001.root";
+  std::string digiFileName = "run_2016_0026.root";
   TFile* file = new TFile(digiFileName.c_str(),"READ");
 
-  TTree* tree = (TTree*) file -> Get("caltree");
+  // TTree* tree = (TTree*) file -> Get("caltree");
+  TTree* tree = (TTree*) file -> Get("cbmsim");
+
   Int_t nEvents = tree -> GetEntries();
 
-  TTreeReader reader("caltree", file);
+  // TTreeReader reader("caltree", file);
+  TTreeReader reader("tree", file);
+  // TTreeReaderValue<S800Calc> s800Calc(reader, "s800");
   //TTreeReaderValue<S800Calc> *readerValueS800Calc;
   //readerValueS800Calc = new TTreeReaderValue<S800Calc>(reader, "s800calc");
   TTreeReaderValue<S800Calc> s800Calc(reader, "s800calc");
+  std::cout<<s800Calc.GetSetupStatus()<<std::endl;
   //S800Calc *fS800CalcBr = new S800Calc;
   //*fS800CalcBr = (S800Calc) *readerValueS800Calc->Get();
 
   S800Calc s800cal;
 
-  TH2D *tof_dE = new TH2D ("tof_dE", "tof_dE", 500, 0, 0, 500, 0, 0);//PID
+  // TH2D *tof_dE = new TH2D ("tof_dE", "tof_dE", 500, 0, 0, 500, 0, 0);//PID
+  TH2D *dEup_dEdown = new TH2D ("dEup_dEdown", "dEup_dEdown", 100, 0,250, 100, 0, 250);//test with dE
 
   for(Int_t i=0;i<nEvents;i++){
     s800cal.Clear();
@@ -45,13 +51,16 @@ void testS800(){
     Double_t S800_dECorr = S800_dE + afp_corr_dE*S800_afp + x0_corr_dE*fabs(S800_x0);
 
     if(std::isnan(S800_tofCorr)==1) continue;
-     tof_dE->Fill(S800_tofCorr,S800_dECorr);
+    // tof_dE->Fill(S800_tofCorr,S800_dECorr);
+    dEup_dEdown->Fill(S800_E1up,S800_E1down);
 
-    std::cout<<S800_tofCorr<<"  "<<S800_tof<<"  "<<S800_dECorr<<"  "<<S800_dE<<"  "<<S800_x0<<std::endl;
+
+    //std::cout<<S800_tofCorr<<"  "<<S800_tof<<"  "<<S800_dECorr<<"  "<<S800_dE<<"  "<<S800_x0<<std::endl;
 
 
   }
 
-  tof_dE->Draw("colz");
+  // tof_dE->Draw("colz");
+  dEup_dEdown->Draw("colz");
 
 }

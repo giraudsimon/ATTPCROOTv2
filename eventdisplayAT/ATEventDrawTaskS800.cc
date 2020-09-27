@@ -105,7 +105,8 @@ fRANSACAlg(0),
 fCvsLvsTheta(0),
 fLvsTheta(0),
 fCvsPID(0),
-fPID(0)
+fPID(0),
+fTEST(0)
 {
 
     //fAtMapPtr = new AtTpcMap();
@@ -217,8 +218,10 @@ ATEventDrawTaskS800::Init()
     fTrackingEventAnaArray = (TClonesArray*) ioMan->GetObject("ATTrackingEventAna");
     if(fTrackingEventAnaArray) LOG(INFO)<<cGREEN<<"Tracking Event Analysis Array Found."<<cNORMAL<<FairLogger::endl;
 
-    fS800CalcArray = (TClonesArray*) ioMan->GetObject("s800cal");
-    if(fS800CalcArray) LOG(INFO)<<cGREEN<<"S800Calc Array Found."<<cNORMAL<<FairLogger::endl;
+    fS800Calc = (S800Calc*) ioMan->GetObject("s800cal");
+    if(fS800Calc) LOG(INFO)<<cGREEN<<"S800Calc Found."<<cNORMAL<<FairLogger::endl;
+    //fS800CalcArray = (TClonesArray*) ioMan->GetObject("s800cal");
+    //if(fS800CalcArray) LOG(INFO)<<cGREEN<<"S800Calc Array Found."<<cNORMAL<<FairLogger::endl;
 
     // gROOT->GetListOfSpecials()->Add(fRawEventArray);
     //fRawEventArray->SetName("ATRawEvent");
@@ -255,7 +258,11 @@ ATEventDrawTaskS800::Init()
     fCvsLvsTheta = fEventManager->GetCvsLvsTheta();
     DrawLvsTheta();
     fCvsPID = fEventManager->GetCvsPID();
-    DrawPID();
+    // DrawPID();
+    DrawTEST();
+
+
+
     //fCvsThetaxPhi = fEventManager->GetCvsThetaxPhi();
     //DrawThetaxPhi();
     //fCvsMC_XY = fEventManager->GetCvsMC_XY();
@@ -305,7 +312,7 @@ ATEventDrawTaskS800::Exec(Option_t* option)
     if(fHitArray){ DrawHitPoints(); DrawMeshSpace();}
     if(fProtoEventArray) DrawProtoSpace();
     if(fHoughSpaceArray && fUnpackHough ) DrawHSpace();
-    if(fS800CalcArray){ DrawS800(); }
+    if(fS800Calc){ DrawS800(); }
 
     gEve -> Redraw3D(kFALSE);
 
@@ -332,7 +339,10 @@ void
 ATEventDrawTaskS800::DrawS800()
 {
 
-  fS800Calc = dynamic_cast<S800Calc*> (fS800CalcArray->At(0));
+  std::cout<<"draw func "<<fS800Calc->GetSCINT(0)->GetDEup()<<std::endl;
+  fTEST->Fill(fS800Calc->GetSCINT(0)->GetDEup(),fS800Calc->GetSCINT(0)->GetDEdown());
+
+  //fS800Calc = dynamic_cast<S800Calc*> (fS800CalcArray->At(0));
   if(fS800Calc->GetIsInCut()){
     Double_t x0_corr_tof = 0.101259;
     Double_t afp_corr_tof = 1177.02;
@@ -353,7 +363,7 @@ ATEventDrawTaskS800::DrawS800()
     Double_t S800_dE = fS800Calc->GetSCINT(0)->GetDE();//check if is this scint (0)
     //Double_t S800_dE = sqrt( (0.6754*S800_E1up) * ( 1.0 * S800_E1down ) );
     Double_t S800_dECorr = S800_dE + afp_corr_dE*S800_afp + x0_corr_dE*fabs(S800_x0);
-    fPID->Fill(S800_tofCorr,S800_dECorr);
+    //fPID->Fill(S800_tofCorr,S800_dECorr);
   }
 
 }
@@ -1539,6 +1549,18 @@ ATEventDrawTaskS800::DrawPID()
     //fLvsTheta->SetMarkerStyle(22);
     //fLvsTheta->SetMarkerColor(kRed);
     fPID -> Draw("colz");
+
+}
+
+void
+ATEventDrawTaskS800::DrawTEST()
+{
+
+    fCvsPID->cd();
+    fTEST = new TH2F("TEST","TEST",250,0,250,250,0,250);
+    //fLvsTheta->SetMarkerStyle(22);
+    //fLvsTheta->SetMarkerColor(kRed);
+    fTEST -> Draw("colz");
 
 }
 

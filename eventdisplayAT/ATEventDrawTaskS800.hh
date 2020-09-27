@@ -107,6 +107,7 @@ class ATEventDrawTaskS800 : public FairTask
     virtual void DrawMC();
     virtual void DrawLvsTheta();
     virtual void DrawPID();
+    virtual void DrawTEST();
 
 
 
@@ -157,7 +158,7 @@ class ATEventDrawTaskS800 : public FairTask
     TClonesArray* fTrackFinderHCArray;
     TClonesArray* fTrackingEventAnaArray;
     TClonesArray* fPatternEventArray;
-    TClonesArray* fS800CalcArray;
+   // TClonesArray* fS800CalcArray;
 
     ATHoughSpaceLine*               fHoughSpaceLine_buff;
     ATHoughSpaceCircle*             fHoughSpaceCircle_buff;
@@ -243,6 +244,7 @@ class ATEventDrawTaskS800 : public FairTask
     TH2F* fLvsTheta;
     TCanvas* fCvsPID;
     TH2F* fPID;
+    TH2F* fTEST;
 
 
     TH2F* fThetaxPhi_Ini;

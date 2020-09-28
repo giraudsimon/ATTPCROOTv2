@@ -1,7 +1,37 @@
+#include "TTreeReader.h"
+#include "TTreeReaderValue.h"
+
+
 
 void testS800(){
 
-  std::string digiFileName = "run_2016_0026.root";
+  gSystem->Load("libATTPCReco.so");
+  gSystem->Load("libS800.so");
+
+  S800Calc* bla = new S800Calc();
+
+  TChain* inputdata = new TChain("cbmsim");
+	inputdata->Add("/home/juan/FairRoot/ATTPCROOTv2_simon/run_2016_0026.root");
+	inputdata->LoadTree(0);
+  //inputdata->Print();
+  //std::cout<<inputdata->GetListOfFiles()<<std::endl;
+
+  TTreeReader* inputfilereader = new TTreeReader(inputdata);
+	Int_t numinputevents = inputfilereader->GetEntries(true);
+  std::cout<<numinputevents<<std::endl;
+
+  TTreeReaderValue<S800Calc*> s800Calc((*inputfilereader), "s800cal");
+
+  auto runsetupst = s800Calc.GetSetupStatus();
+  std::cout<<runsetupst<<std::endl;
+
+  //TTreeReaderValue<ATRansacMod> myRansac((*inputfilereader), "ATRansacH");
+
+  //auto runsetupst2 = myRansac.GetSetupStatus();
+  //std::cout<<runsetupst2<<std::endl;
+
+  /*
+  std::string digiFileName = "/home/juan/FairRoot/ATTPCROOTv2_simon/run_2016_0026.root";
   TFile* file = new TFile(digiFileName.c_str(),"READ");
 
   // TTree* tree = (TTree*) file -> Get("caltree");
@@ -10,16 +40,21 @@ void testS800(){
   Int_t nEvents = tree -> GetEntries();
 
   // TTreeReader reader("caltree", file);
-  TTreeReader reader("tree", file);
+  TTreeReader reader("Mytree", file);
+  //std::cout<<reader.IsInvalid()<<std::endl;
   // TTreeReaderValue<S800Calc> s800Calc(reader, "s800");
   //TTreeReaderValue<S800Calc> *readerValueS800Calc;
   //readerValueS800Calc = new TTreeReaderValue<S800Calc>(reader, "s800calc");
   TTreeReaderValue<S800Calc> s800Calc(reader, "s800calc");
-  std::cout<<s800Calc.GetSetupStatus()<<std::endl;
+  std::cout<<s800Calc.GetSetupStatus()<<"  "<<s800Calc.GetBranchName()<<std::endl;
   //S800Calc *fS800CalcBr = new S800Calc;
-  //*fS800CalcBr = (S800Calc) *readerValueS800Calc->Get();
+  // *fS800CalcBr = (S800Calc) *readerValueS800Calc->Get();
+  */
 
+
+  /*
   S800Calc s800cal;
+
 
   // TH2D *tof_dE = new TH2D ("tof_dE", "tof_dE", 500, 0, 0, 500, 0, 0);//PID
   TH2D *dEup_dEdown = new TH2D ("dEup_dEdown", "dEup_dEdown", 100, 0,250, 100, 0, 250);//test with dE
@@ -62,5 +97,5 @@ void testS800(){
 
   // tof_dE->Draw("colz");
   dEup_dEdown->Draw("colz");
-
+  */
 }

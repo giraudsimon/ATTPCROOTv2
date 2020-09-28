@@ -88,6 +88,7 @@ class ATEventManagerS800 : public TEveEventManager
     TCanvas* fCvsPIDFull;
     TH2F* fPIDFull;
     virtual void DrawPIDFull();
+    virtual void FillPIDFull();
 
   private :
     FairRootManager* fRootManager;

@@ -1,5 +1,7 @@
-void run_eve(TString  InputDataFile = "run_2016_0026.root",TString  OutputDataFile = "output.reco_display.root")
-{
+//void run_eve(TString  InputDataFile = "/home/juan/FairRoot/ATTPCROOTv2_simon/run_2016_0026.root",TString  OutputDataFile = "output.reco_display.root")
+//void run_eve(TString  InputDataFile = "run_unpacked_0002_new.root",TString  OutputDataFile = "output.reco_display.root")
+void run_eve(TString  InputDataFile = "merged_run0002_48Ca.root",TString  OutputDataFile = "output.reco_display.root"){
+
   FairLogger *fLogger = FairLogger::GetLogger();
   fLogger -> SetLogToScreen(kTRUE);
   fLogger->SetLogVerbosityLevel("MEDIUM");

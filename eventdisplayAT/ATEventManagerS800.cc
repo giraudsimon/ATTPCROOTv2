@@ -113,8 +113,6 @@ void
 ATEventManagerS800::Init(Int_t option, Int_t level, Int_t nNodes)
 {
 
-
-
   gStyle->SetOptTitle(0);
   //gStyle->SetCanvasPreferGL(kTRUE);
   gStyle->SetPalette(55);
@@ -374,6 +372,8 @@ ATEventManagerS800::Init(Int_t option, Int_t level, Int_t nNodes)
 
   fRunAna->Init();
 
+  FillPIDFull(); // plot the Full PID at the beginning of the visualiztion
+
   if(gGeoManager) {
     TGeoNode* geoNode = gGeoManager->GetTopNode();
     TEveGeoTopNode* topNode
@@ -492,8 +492,20 @@ ATEventManagerS800::DrawPIDFull()
     fPIDFull = new TH2F("PIDFull","PIDFull",180,0,180,500,0,1030);
     //fLvsTheta->SetMarkerStyle(22);
     //fLvsTheta->SetMarkerColor(kRed);
+
+    fPIDFull -> Draw("colz");
+
+}
+
+
+void
+ATEventManagerS800::FillPIDFull()
+{
+
+
     TChain* chain =FairRootManager::Instance()->GetInChain();
     Entries = chain->GetEntriesFast();
+    //std::cout << "el plot full antes....  "<< Entries<< '\n';
     for(int neve=1;neve<Entries;neve++){
       fRootManager->ReadEvent(neve);
   //    cS800Array = (TClonesArray*) fRootManager->GetObject("s800cal");
@@ -523,11 +535,11 @@ ATEventManagerS800::DrawPIDFull()
       Double_t S800_dE = cS800Calc->GetSCINT(0)->GetDE();//check if is this scint (0)
       //Double_t S800_dE = sqrt( (0.6754*S800_E1up) * ( 1.0 * S800_E1down ) );
       Double_t S800_dECorr = S800_dE + afp_corr_dE*S800_afp + x0_corr_dE*fabs(S800_x0);
-      fPIDFull->Fill(S800_tofCorr,S800_dECorr);
+      if(std::isnan(S800_tofCorr)==0) fPIDFull->Fill(S800_tofCorr,S800_dECorr);
 
+      //std::cout << "el plot full  "<<S800_tofCorr<<"   "<<S800_dECorr << '\n';
     }
 
-    fPIDFull -> Draw("colz");
 
 }
 
@@ -598,6 +610,8 @@ ATEventManagerS800::make_gui()
 
        TChain* chain =FairRootManager::Instance()->GetInChain();
        Entries = chain->GetEntriesFast();
+
+       //std::cout << "Numero entradas en el gui   "<<Entries << '\n';
 
     TEveBrowser* browser = gEve->GetBrowser();
     browser->StartEmbedding(TRootBrowser::kLeft);

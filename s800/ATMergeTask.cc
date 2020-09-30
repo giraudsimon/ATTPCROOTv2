@@ -46,6 +46,7 @@ ATMergeTask::~ATMergeTask()
   fS800TsGraph->Delete();
   fS800TsFunc->Delete();
   fS800CalcBr->Delete();
+  fRawEventArray->Delete();
   delete fS800file;
 }
 
@@ -55,8 +56,11 @@ void   ATMergeTask::SetGlom(Double_t glom)                  { fGlom     = glom; 
 void   ATMergeTask::SetOptiEvtDelta(Int_t EvtDelta)                  { fEvtDelta     = EvtDelta; }
 void   ATMergeTask::SetPIDcut(TString file)                  { fcutPIDFile.push_back(file); }
 void   ATMergeTask::SetTsDelta(Int_t TsDelta)                  { fTsDelta     = TsDelta; }
+void   ATMergeTask::SetParameters(std::vector<Double_t> vec)   { fParameters     = vec; }
+
 Int_t   ATMergeTask::GetS800TsSize()                  { return fTsEvtS800Size; }
 Int_t   ATMergeTask::GetMergedTsSize()                  { return fEvtMerged; }
+vector<Double_t> ATMergeTask::GetParameters()   { return fParameters; }
 
 Bool_t ATMergeTask::isInGlom(Long64_t ts1, Long64_t ts2)
 {
@@ -68,6 +72,7 @@ Bool_t ATMergeTask::isInGlom(Long64_t ts1, Long64_t ts2)
 
 Bool_t ATMergeTask::isInPID(S800Calc *s800calc)
 {
+  /*
   Double_t x0_corr_tof = 0.101259;
   Double_t afp_corr_tof = 1177.02;
   Double_t afp_corr_dE = 61.7607;
@@ -88,15 +93,55 @@ Bool_t ATMergeTask::isInPID(S800Calc *s800calc)
   Double_t S800_dE = sqrt( (0.6754*S800_E1up) * ( 1.0 * S800_E1down ) );
   Double_t S800_dECorr = S800_dE + afp_corr_dE*S800_afp + x0_corr_dE*fabs(S800_x0);
 
+*/
+  Double_t x0_corr_tof = fParameters.at(0);
+  Double_t afp_corr_tof = fParameters.at(1);
+  Double_t afp_corr_dE = fParameters.at(2);
+  Double_t x0_corr_dE = fParameters.at(3);
+  Double_t rf_offset = fParameters.at(4);
+  Double_t corrGainE1up = fParameters.at(5);
+  Double_t corrGainE1down = fParameters.at(6);
+
+  Double_t S800_timeRf = s800calc->GetMultiHitTOF()->GetFirstRfHit();
+  Double_t S800_timeE1up = s800calc->GetMultiHitTOF()->GetFirstE1UpHit();
+  Double_t S800_timeE1down = s800calc->GetMultiHitTOF()->GetFirstE1DownHit();
+  Double_t S800_timeE1 = sqrt( (corrGainE1up*S800_timeE1up) * (corrGainE1down*S800_timeE1down) );
+  Double_t S800_timeXf = s800calc->GetMultiHitTOF()->GetFirstXfHit();
+  Double_t S800_timeObj = s800calc->GetMultiHitTOF()->GetFirstObjHit();
+
+  Double_t S800_x0 = s800calc->GetCRDC(0)->GetXfit();
+  Double_t S800_x1 = s800calc->GetCRDC(1)->GetXfit();
+  Double_t S800_y0 = s800calc->GetCRDC(0)->GetY();
+  Double_t S800_y1 = s800calc->GetCRDC(1)->GetY();
+
+  Double_t S800_E1up = s800calc->GetSCINT(0)->GetDEup();
+  Double_t S800_E1down = s800calc->GetSCINT(0)->GetDEdown();
+
+  Double_t S800_tof = S800_timeObj - S800_timeE1;
+  Double_t XfObj_tof = S800_timeXf - S800_timeObj;
+
+  Double_t S800_afp = atan( (S800_x1-S800_x0)/1073. );
+  Double_t S800_bfp = atan( (S800_y1-S800_y0)/1073. );
+  Double_t S800_tofCorr = S800_tof + x0_corr_tof*S800_x0 + afp_corr_tof*S800_afp;// - rf_offset;
+  //Double_t S800_dE = s800calc->GetSCINT(0)->GetDE();//check if is this scint (0)
+  Double_t S800_dE = sqrt( (corrGainE1up*S800_E1up) * (corrGainE1down* S800_E1down ) );
+  Double_t S800_dECorr = S800_dE + afp_corr_dE*S800_afp + x0_corr_dE*fabs(S800_x0);
+
+
   Bool_t is=kFALSE;
   Int_t InCondition = 0;
 
-  for(Int_t w=0; w<fcutPID.size();w++) InCondition += fcutPID[w]->IsInside(S800_tofCorr,S800_dECorr); //or of IsInside
+  for(Int_t w=0; w<fcutPID.size();w++){
+    if(fcutPID[w]->IsInside(S800_tofCorr,S800_dECorr) || fcutPID[w]->IsInside(S800_tofCorr,XfObj_tof)) InCondition += 1; //or of IsInside
+  }
+  // for(Int_t w=0; w<fcutPID.size();w++) if(fcutPID[w]->IsInside(S800_tofCorr,S800_dECorr)) InCondition += fcutPID[w]->IsInside(S800_tofCorr,S800_dECorr); //or of IsInside
 
-  //std::cout <<" Number of TCutG files  "<<fcutPID.size()<<"   "<<InCondition<< '\n';
 
-  if(std::isnan(S800_tofCorr)==0)
-  if(InCondition){
+  std::cout <<" Number of TCutG files  "<<fcutPID.size()<<"   "<<InCondition<<" "<<corrGainE1up<<" "<<x0_corr_tof<< '\n';
+
+  // if(std::isnan(S800_tofCorr)==0)
+  if(std::isnan(S800_tofCorr)==0 && std::isnan(XfObj_tof)==0 && std::isnan(S800_dECorr)==0)
+  if(InCondition==fcutPID.size()){// if(InCondition){
     is=kTRUE;
   }
   return is;
@@ -265,9 +310,10 @@ if(S800EvtMatch>0) {
 
   *fS800CalcBr = (S800Calc) *readerValueS800Calc->Get();
 
-  fS800CalcBr->SetIsInCut(isInPID(fS800CalcBr));
-
-  rawEvent->SetIsExtGate(isInPID(fS800CalcBr));
+  Bool_t isIn=kFALSE;
+  isIn=isInPID(fS800CalcBr);
+  fS800CalcBr->SetIsInCut(isIn);
+  rawEvent->SetIsExtGate(isIn);
 
 
 

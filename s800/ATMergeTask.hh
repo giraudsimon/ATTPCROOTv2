@@ -27,13 +27,14 @@ public:
   void SetOptiEvtDelta(Int_t EvtDelta);
   void SetPIDcut(TString file);
   void SetTsDelta(Int_t TsDelta);
+  void SetParameters(std::vector<Double_t> vec);
 
   Int_t GetS800TsSize();
   Int_t GetMergedTsSize();
+  vector<Double_t> GetParameters();
 
   Bool_t isInGlom(Long64_t ts1, Long64_t ts2);
   Bool_t isInPID(S800Calc *s800calc);
-
 
   virtual InitStatus Init();
   //    virtual void SetParContainers();
@@ -50,6 +51,7 @@ private:
   TString fS800File;
   vector <Long64_t> fS800Ts;
   vector <Double_t> fS800Evt;
+  vector <Double_t> fParameters;
 
   TF1 *fS800TsFunc;
   // TF1 *fOptiFit;

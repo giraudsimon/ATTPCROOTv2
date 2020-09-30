@@ -93,7 +93,7 @@ static double coeff_hodo[32] = {100000000, 1164, 887, 100000000, 824, 1728, 826,
 	}
 
 
-	void runana_merg_cal_d2He()
+	void runana_merg_cal_d2He_newRansac()
 	{
 
 		SetERtable();
@@ -101,22 +101,28 @@ static double coeff_hodo[32] = {100000000, 1164, 887, 100000000, 824, 1728, 826,
 		FairRunAna* run = new FairRunAna(); //Forcing a dummy run
 		ATd2HeAnalysis *d2heana = new ATd2HeAnalysis ();
 
-		std::string digiFileName = "merged.root";
+		// std::string digiFileName = "/mnt/simulations/ceclub/giraud/attpc/ATTPCROOTv2/macro/Unpack_HDF5/rootFiles/run_unpacked_0002_new.root";//merged.root
+		std::string digiFileName = "/projects/ceclub/giraud/attpc/ATTPCROOTv2/macro/Unpack_HDF5/e18008_S800/run_2016_0026.root";//merged.root
 
 		TFile* file = new TFile(digiFileName.c_str(),"READ");
 
-		TTree* tree = (TTree*) file -> Get("tree");
+		TTree* tree = (TTree*) file -> Get("cbmsim");
 		Int_t nEvents = tree -> GetEntries();
 
-		TTreeReader reader("tree", file);
-		TTreeReaderValue<S800Calc> s800Calc(reader, "s800");
+		S800Calc *s800cal = new S800Calc();
+		TBranch *bS800cal = tree->GetBranch("s800cal");
+	  bS800cal->SetAddress(&s800cal);
+
+		TTreeReader reader("cbmsim", file);
+		// TTreeReaderValue<S800Calc> s800Calc(reader, "s800cal");
 		//TTreeReaderValue<TClonesArray> eventArray(reader, "attpc");
-		TTreeReaderValue<std::vector<ATRANSACN::ATRansac::PairedLines>> ransacPL(reader, "PLines");
-		TTreeReaderValue<std::vector<ATTrack>> ransacTrackCand(reader, "fTrackCand");
+		// TTreeReaderValue<std::vector<ATRANSACN::ATRansac::PairedLines>> ransacPL(reader, "PLines");
+		// TTreeReaderValue<std::vector<ATTrack>> ransacTrackCand(reader, "fTrackCand");
+		TTreeReaderValue<TClonesArray> ransacArray(reader, "ATRansac");
 		//TTreeReaderValue<TClonesArray> ransacArray(reader, "PLines");
 
 		TFile* outfile;
-		TString  outFileNameHead = "attpcana_merg_cal.root";//attpcsim_d2He_test20k
+		TString  outFileNameHead = "attpcana_merg_newRansac.root";//attpcsim_d2He_test20k
 		outfile   = TFile::Open(outFileNameHead.Data(),"recreate");
 
 		TH1F* scatteringAngle = new TH1F("scatteringAngle","scatteringAngle",1000,0,200);
@@ -221,13 +227,13 @@ static double coeff_hodo[32] = {100000000, 1164, 887, 100000000, 824, 1728, 826,
 		Double_t he2_mass = 2.0 * proton_mass;
 		Double_t Ekin_proj = 115.0 * 14.008596359;//100.0
 
-		std::vector<ATRANSACN::ATRansac::PairedLines> lines;
+		// std::vector<ATRANSACN::ATRansac::PairedLines> lines;
 		std::vector<ATTrack> trackCand;
 
 
 		//----------------------- S800 -------------------------------------------------
 
-		S800Calc s800cal;
+		// S800Calc s800cal;
 
 		std::string mapFile="/projects/ceclub/giraud/ATTPCROOTv2/macro/Simulation/d2He/Analyis_d2He/inv_map.inv";
 		TInverseMap *inv_map = new TInverseMap(mapFile.c_str());
@@ -236,7 +242,8 @@ static double coeff_hodo[32] = {100000000, 1164, 887, 100000000, 824, 1728, 826,
 		/// --------------------- Event loop -------------------------------------------
 
 		for(Int_t i=0;i<nEvents;i++){
-
+			s800cal->Clear();
+			bS800cal->GetEntry(i);
 			reader.Next();
 
 			S800_timeStamp=0;
@@ -244,25 +251,31 @@ static double coeff_hodo[32] = {100000000, 1164, 887, 100000000, 824, 1728, 826,
 			S800_tofCorr=0.;S800_dE=0.;S800_dECorr=0.;S800_hodoSum=0.;S800_afp=0.;S800_bfp=0.;S800_ata=0.;
 			S800_bta=0.;S800_yta=0.;S800_dta=0.;S800_thetaLab=0.;S800_phi=0.;
 
-			s800cal.Clear();
-			lines.clear();
 
-			//reader.Next();
-			//ATRANSACN::ATRansac* fATRansac  = dynamic_cast<ATRANSACN::ATRansac*> (ransacArray->At(0));
-			trackCand  = *ransacTrackCand;
-			lines  = *ransacPL;
-			s800cal = *s800Calc;
-			std::cout<<" "<<trackCand.size()<<" "<<lines.size()<<std::endl;
+			// ATRANSACN::ATRansac* fATRansac  = dynamic_cast<ATRANSACN::ATRansac*> (ransacArray->At(0));
+		  // ATRansacMod* fATRansac  = dynamic_cast<ATRansacMod*> (ransacArray->At(0));
+		  // ATMlesacMod* fATRansac  = dynamic_cast<ATMlesacMod*> (ransacArray->At(0));
+		  ATLmedsMod* fATRansac  = dynamic_cast<ATLmedsMod*> (ransacArray->At(0));
+			 if(fATRansac==NULL) std::cout<<" Null pointer fATRansac "<<"\n";
+			 else{
+			 std::vector<ATTrack> trackCand = fATRansac->GetTrackCand();
+
+
+			// s800cal = *s800Calc;
+			// std::cout<<" "<<<<std::endl;
+			 // if(fATRansac->GetVz().size()>0) std::cout<<" "<<fATRansac->GetVz().at(0)<<std::endl;
 			//ATTrack* track = trackCand.at(indexID);
 
-			if(lines.size()>0){ //else std::cout<<" No pair lines "<<i<<"\n";
+
+/*
+			if(trackCand.size()>0){
 
 			theta1=0.; theta2=0.; phi1=0.; phi2=0.; range_p1=0.; range_p2=0.; eLoss_p1_reco=0.; eLoss_p2_reco=0.; mom1_norm_reco=0.; mom2_norm_reco=0.; //reset variables
 			E_tot_he2=0.; he2_mass_ex=0.; kin_He2=0.; theta_He2=0.; phi_He2=0.;theta_cm=0.; Ex4=0.;
 		    	MaxR1=0.; MaxR2=0.; MaxZ1=0.; MaxZ2=0.;
 
 
-                        TVector3 vertexMean = lines.at(0).meanVertex;
+												TVector3 vertexMean = fATRansac->GetVertexMean();
                         TVector3 lastPoint1 = trackCand.at(0).GetLastPoint();
                         TVector3 lastPoint2 = trackCand.at(1).GetLastPoint();
                         MaxR1=sqrt(pow(lastPoint1.X(),2)+pow(lastPoint1.Y(),2));
@@ -270,25 +283,27 @@ static double coeff_hodo[32] = {100000000, 1164, 887, 100000000, 824, 1728, 826,
                         MaxZ1=lastPoint1.Z();
                         MaxZ2=lastPoint2.Z();
 
+												std::cout<<s800cal.GetTS()<<" "<<MaxR1<<std::endl;
+
 			if(MaxR1>=242. || MaxR2>=242. || MaxR1<=25. || MaxR2<=25. || MaxZ1>973. || MaxZ2>973.) continue; //if do no stop in chamber or in the beam hole
 
-
+*/
 			//----------------------- S800 -------------------------------------------------
-			S800_timeStamp = s800cal.GetTS();
-			S800_rf = s800cal.GetMultiHitTOF()->GetFirstRfHit();
-			S800_x0 = s800cal.GetCRDC(0)->GetX();
-			S800_x1 = s800cal.GetCRDC(1)->GetX();
-			S800_y0 = s800cal.GetCRDC(0)->GetY();
-			S800_y1 = s800cal.GetCRDC(1)->GetY();
-			S800_E1up = s800cal.GetMultiHitTOF()->GetFirstE1UpHit();
-			S800_E1down = s800cal.GetMultiHitTOF()->GetFirstE1DownHit();
+			S800_timeStamp = s800cal->GetTS();
+			S800_rf = s800cal->GetMultiHitTOF()->GetFirstRfHit();
+			S800_x0 = s800cal->GetCRDC(0)->GetX();
+			S800_x1 = s800cal->GetCRDC(1)->GetX();
+			S800_y0 = s800cal->GetCRDC(0)->GetY();
+			S800_y1 = s800cal->GetCRDC(1)->GetY();
+			S800_E1up = s800cal->GetMultiHitTOF()->GetFirstE1UpHit();
+			S800_E1down = s800cal->GetMultiHitTOF()->GetFirstE1DownHit();
 			S800_tof = S800_rf;//might change
 			S800_afp = atan( (S800_x1-S800_x0)/1073. );
 			S800_bfp = atan( (S800_y1-S800_y0)/1073. );
 			S800_tofCorr = S800_tof + x0_corr_tof*S800_x0 + afp_corr_tof*S800_afp - rf_offset;
-			S800_dE = s800cal.GetSCINT(0)->GetDE();//check if is this scint (0)
+			S800_dE = s800cal->GetSCINT(0)->GetDE();//check if is this scint (0)
 			S800_dECorr = S800_dE + afp_corr_dE*S800_afp + x0_corr_dE*fabs(S800_x0);
-			for (Int_t j=0; j<32; j++) if (s800cal.GetHODOSCOPE(j)->GetEnergy()>=10 && s800cal.GetHODOSCOPE(j)->GetEnergy()<=4000) S800_hodoSum += s800cal.GetHODOSCOPE(j)->GetEnergy()*3000./coeff_hodo[j];
+			for (Int_t j=0; j<32; j++) if (s800cal->GetHODOSCOPE(j)->GetEnergy()>=10 && s800cal->GetHODOSCOPE(j)->GetEnergy()<=4000) S800_hodoSum += s800cal->GetHODOSCOPE(j)->GetEnergy()*3000./coeff_hodo[j];
 			std::vector <double> S800_invMapOut = get_invmap_vars(inv_map,S800_x0,S800_y0,S800_afp,S800_bfp);
 			S800_ata = S800_invMapOut.at(0);
 			S800_bta = S800_invMapOut.at(1);
@@ -302,8 +317,8 @@ static double coeff_hodo[32] = {100000000, 1164, 887, 100000000, 824, 1728, 826,
 			x_y_crdc1->Fill(S800_x0,S800_y0);
 			x_y_crdc2->Fill(S800_x1,S800_y1);
 
-			//std::cout<<i<<" "<<lines.size()<<" "<<S800_timeStamp<<" "<<S800_rf<<" "<<S800_y0<<std::endl;
-
+			std::cout<<i<<" "<<" "<<S800_timeStamp<<" "<<S800_rf<<" "<<S800_y0<<std::endl;
+/*
 			//------------------------------------------------------------------------------
 
                         lastX1 = lastPoint1.X();
@@ -391,7 +406,8 @@ static double coeff_hodo[32] = {100000000, 1164, 887, 100000000, 824, 1728, 826,
 
                         ivt=i;
                         anatree->Fill();
-		} //if lines.size()>0
+		} //if lines.size()>0*/
+	}//ATRansac check NULL
 	}// Event loop
 
 

@@ -43,6 +43,8 @@ ATMergeTask::ATMergeTask()
 
 ATMergeTask::~ATMergeTask()
 {
+  fS800TsGraph->Delete();
+  fS800TsFunc->Delete();
   fS800CalcBr->Delete();
   delete fS800file;
 }
@@ -100,6 +102,12 @@ Bool_t ATMergeTask::isInPID(S800Calc *s800calc)
   return is;
 }
 
+// TGraph *fS800TsGraph;
+// Double_t Graph2Func(double *xx, double *)
+// {
+//    return fS800TsGraph->Eval(xx[0]);
+// }
+
 
 
 InitStatus
@@ -144,19 +152,23 @@ ATMergeTask::Init()
   //I think TS has to be converted into double for TGraph, but would prefer to not have this extra step
   vector <Double_t> S800_ts(fS800Ts.begin(),fS800Ts.end());
   auto c1 = new TCanvas("c1", "c1", 800, 800);
-  Double_t par_fit[2];
+  // Double_t par_fit[2];
   // gROOT->SetBatch(kTRUE);//kTRUE not display the plots
   //fOptiFit = new TF1("fOptiFit","[1]*x + [0]",0,1E+9);//poly 1 seems relatively ok, fit do not need to be very precise,
-  fOptiFit = new TF1("fOptiFit","[1]*x + [0]",0,S800_ts.back());//poly 1 seems relatively ok, fit do not need to be very precise,
+  // fOptiFit = new TF1("fOptiFit","[1]*x + [0]",0,S800_ts.back());//poly 1 seems relatively ok, fit do not need to be very precise,
   //the fit limit might be an important parmeter
-  //TF1 *f1 = new TF1("f1","[2]*x*x + [1]*x + [0]",0,1000);//ploy 2
-  TGraph *gS800 = new TGraph(fTsEvtS800Size, &S800_ts[0], &fS800Evt[0]);//fTsEvtS800Size instead of 80 (just for the test file)
-  gS800->Fit("fOptiFit");//might be biased by the TS default value
-  fOptiFit->GetParameters(&par_fit[0]);
-  fOptiFit->SetParameters(par_fit[0],par_fit[1]);
+  // TGraph *gS800 = new TGraph(fTsEvtS800Size, &S800_ts[0], &fS800Evt[0]);//fTsEvtS800Size instead of 80 (just for the test file)
+  fS800TsGraph = new TGraph(fTsEvtS800Size, &S800_ts[0], &fS800Evt[0]);//fTsEvtS800Size instead of 80 (just for the test file)
+  // fS800TsFunc = new TF1("fS800TsFunc",Graph2Func,0,S800_ts.back());
+  fS800TsFunc = new TF1("fS800TsFunc",[&](double*x, double *){ return fS800TsGraph->Eval(x[0]); },0,S800_ts.back(),0);
+  // gS800->Fit("fOptiFit");//might be biased by the TS default value
+  // fOptiFit->GetParameters(&par_fit[0]);
+  // fOptiFit->SetParameters(par_fit[0],par_fit[1]);
   c1->cd();
-  gS800->Draw("AL");
+  // gS800->Draw("AL");
+  fS800TsGraph->Draw("AL");
   //f1->Draw("same");
+  fS800TsFunc->Draw("same");
 
   //auto c2 = new TCanvas("c2", "c2", 800, 800);
   //c2->cd();
@@ -214,8 +226,10 @@ ATMergeTask::Exec(Option_t *opt)
   Long64_t ATTPCTs = rawEvent -> GetTimestamp();
   int minj, maxj;
   Double_t S800EvtMatch=-1;
-  minj=(int)fOptiFit->Eval(ATTPCTs)-fEvtDelta;//define the ATTPC entries range where the matching timestamp should be, to not loop over all the ATTPC entries.
-  maxj=(int)fOptiFit->Eval(ATTPCTs)+fEvtDelta;
+  // minj=(int)fOptiFit->Eval(ATTPCTs)-fEvtDelta;//define the ATTPC entries range where the matching timestamp should be, to not loop over all the ATTPC entries.
+  // maxj=(int)fOptiFit->Eval(ATTPCTs)+fEvtDelta;
+  minj=(int)fS800TsFunc->Eval(ATTPCTs)-fEvtDelta;//define the ATTPC entries range where the matching timestamp should be, to not loop over all the ATTPC entries.
+  maxj=(int)fS800TsFunc->Eval(ATTPCTs)+fEvtDelta;
 
   for(int i=minj;i<maxj;i++)
   {
@@ -229,7 +243,7 @@ ATMergeTask::Exec(Option_t *opt)
       }
       else*/ if(isInGlom(fS800Ts.at(i)+fTsDelta,ATTPCTs) ){//fTsDelta=+1272 likely from the length of the sync signal between S800 and AT-TPC
       S800EvtMatch = (int)fS800Evt.at(i);
-      std::cout<<" in glom "<<minj<<" "<<maxj<<" "<<i<<" "<<fS800Ts.at(i)<<" "<<ATTPCTs<<" "<<S800EvtMatch<<std::endl;
+      std::cout<<" in glom "<<minj<<" "<<maxj<<" "<<i<<" "<<fS800Ts.at(i)<<" "<<ATTPCTs<<" "<<S800EvtMatch<<" "<<fS800TsFunc->Eval(ATTPCTs)<<" "<<ATTPCTs-fS800Ts.at(i)<<std::endl;
       fEvtMerged++;
       break;
     }

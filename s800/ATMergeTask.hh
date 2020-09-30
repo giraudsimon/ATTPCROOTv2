@@ -51,7 +51,8 @@ private:
   vector <Long64_t> fS800Ts;
   vector <Double_t> fS800Evt;
 
-  TF1 *fOptiFit;
+  TF1 *fS800TsFunc;
+  // TF1 *fOptiFit;
   Double_t fGlom;
 
   vector<TCutG *> fcutPID;
@@ -59,6 +60,7 @@ private:
 
   Bool_t fIsPersistence;
 
+  TGraph *fS800TsGraph;
 
 
   ClassDef(ATMergeTask, 1);

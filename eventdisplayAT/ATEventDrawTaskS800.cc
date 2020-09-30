@@ -340,7 +340,7 @@ ATEventDrawTaskS800::DrawS800()
 {
 
   std::cout<<"draw func "<<fS800Calc->GetSCINT(0)->GetDEup()<<std::endl;
-  fTEST->Fill(fS800Calc->GetSCINT(0)->GetDEup(),fS800Calc->GetSCINT(0)->GetDEdown());
+  //fTEST->Fill(fS800Calc->GetSCINT(0)->GetDEup(),fS800Calc->GetSCINT(0)->GetDEdown());
 
   //fS800Calc = dynamic_cast<S800Calc*> (fS800CalcArray->At(0));
   if(fS800Calc->GetIsInCut()){
@@ -364,6 +364,7 @@ ATEventDrawTaskS800::DrawS800()
     //Double_t S800_dE = sqrt( (0.6754*S800_E1up) * ( 1.0 * S800_E1down ) );
     Double_t S800_dECorr = S800_dE + afp_corr_dE*S800_afp + x0_corr_dE*fabs(S800_x0);
     //fPID->Fill(S800_tofCorr,S800_dECorr);
+    fTEST->Fill(fS800Calc->GetSCINT(0)->GetDEup(),fS800Calc->GetSCINT(0)->GetDEdown());
   }
 
 }

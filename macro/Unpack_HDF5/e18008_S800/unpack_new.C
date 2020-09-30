@@ -76,19 +76,37 @@ void unpack_new(int runNumberS800, int runNumberATTPC)
  // HDFParserTask->SetAuxChannel(hash, "IonCb_34");
 
 
+
+ // Double_t x0_corr_tof = 0.101259;
+ // Double_t afp_corr_tof = 1177.02;
+ // Double_t afp_corr_dE = 61.7607;
+ // Double_t x0_corr_dE = -0.0403;
+ // Double_t rf_offset = 0.0;
+ // Double_t corrGainE1up = 0.6754;
+ // Double_t corrGainE1down = 1.;
+
+  std::vector<Double_t> S800par;
+  S800par.push_back(0.);//x0_corr_tof
+  S800par.push_back(0.);//afp_corr_tof
+  S800par.push_back(0.);//afp_corr_dE
+  S800par.push_back(0.);//x0_corr_dE
+  S800par.push_back(0.);//rf_offset
+  S800par.push_back(1.);//corrGainE1up
+  S800par.push_back(1.);//corrGainE1down
   // TString S800File = "/projects/ceclub/giraud/s800root_jorge/s800root/files/rootFiles/cal/test-runs800-48Ca-CAL-0001-new.root";
   // TString S800File = TString::Format("/mnt/analysis/e18008/rootS800/cal/run-2%03d-00.root", runNumberS800);
   TString S800File = TString::Format("/mnt/analysis/e18008/rootS800/cal/run-%04d-00.root", runNumberS800);
   ATMergeTask *MergeEvt = new ATMergeTask();
   MergeEvt->SetS800File(S800File);
   MergeEvt->SetPersistence(kTRUE);
-  // MergeEvt->SetOptiEvtDelta(150);//missed few events during the tests with 100 :: value with fit method
-  MergeEvt->SetOptiEvtDelta(5);//value with TGraph to TF1 method
+  // MergeEvt->SetOptiEvtDelta(150);//old way with fit
+  MergeEvt->SetOptiEvtDelta(5);//missed few events during the tests with 100
   MergeEvt->SetGlom(2);
   MergeEvt->SetTsDelta(1272);
   //MergeEvt->SetPIDcut("/projects/ceclub/giraud/attpc/ATTPCROOTv2/macro/Unpack_HDF5/e18008_S800/CUT1.root");
   //MergeEvt->SetPIDcut("/projects/ceclub/giraud/attpc/ATTPCROOTv2/macro/Unpack_HDF5/e18008_S800/CUT2.root");
-  // MergeEvt->SetPIDcut("CUT1.root");
+  MergeEvt->SetPIDcut("CUT1.root");
+  MergeEvt->SetParameters(S800par);
 
   //Create PSA task
   ATPSATask *psaTask = new ATPSATask();

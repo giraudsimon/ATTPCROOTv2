@@ -1,5 +1,5 @@
 
-void PIDS800(int runNumberS800, int runNumberATTPC){
+void testS800(int runNumberS800, int runNumberATTPC){
 
 
   // Double_t x0_corr_tof = 0.101259;
